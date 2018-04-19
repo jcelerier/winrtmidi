@@ -17,7 +17,7 @@
 
 namespace WinRT
 {
-    WinRTMidiErrorType winrt_initialize_midi(MidiPortChangedCallback callback, WinRTMidiPtr* winrtMidi)
+    WinRTMidiErrorType winrt_initialize_midi(void* ctx, MidiPortChangedCallback callback, WinRTMidiPtr* winrtMidi)
     {
         *winrtMidi = nullptr;
 
@@ -36,7 +36,7 @@ namespace WinRT
         }
 
         // attempt to initialize the Midi Portwatchers
-        WinRTMidi* midi = new WinRTMidi(callback);
+        WinRTMidi* midi = new WinRTMidi(ctx, callback);
         WinRTMidiErrorType result = midi->Initialize();
         if(result != WINRT_NO_ERROR)
         {
@@ -65,7 +65,7 @@ namespace WinRT
         return midiPtr->GetPortWatcherWrapper(type);
     }
 
-    WinRTMidiErrorType winrt_open_midi_in_port(WinRTMidiPtr midi, unsigned int index, WinRTMidiInCallback callback, WinRTMidiInPortPtr* midiPort)
+    WinRTMidiErrorType winrt_open_midi_in_port(WinRTMidiPtr midi, unsigned int index, void* ctx, WinRTMidiInCallback callback, WinRTMidiInPortPtr* midiPort)
     {
         *midiPort = nullptr;
         WinRTMidiErrorType result = WINRT_NO_ERROR;
@@ -87,7 +87,7 @@ namespace WinRT
         result = port->OpenPort(id);
         if (result == WINRT_NO_ERROR)
         {
-            *midiPort = (WinRTMidiInPortPtr) new MidiInPortWrapper(port, callback);
+            *midiPort = (WinRTMidiInPortPtr) new MidiInPortWrapper(port, ctx, callback);
         }
         return result;
     }

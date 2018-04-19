@@ -55,7 +55,8 @@ namespace WinRT
         virtual WinRTMidiErrorType OpenPort(Platform::String^ id) override;
 
         // needs to be internal as MidiInMessageReceivedCallbackType is not a WinRT type
-        void SetMidiInCallback(WinRTMidiInCallback callback) {
+        void SetMidiInCallback(void* ctx, WinRTMidiInCallback callback) {
+            mCtx = ctx;
             mMessageReceivedCallback = callback;
         };
 
@@ -64,6 +65,7 @@ namespace WinRT
         Windows::Devices::Midi::MidiInPort^ mMidiInPort;
         long long mLastMessageTime;
         bool mFirstMessage;
+        void* mCtx{};
         WinRTMidiInCallback mMessageReceivedCallback;
     };
 
@@ -71,7 +73,7 @@ namespace WinRT
     {
     public:
         virtual ~WinRTMidiOutPort();
-        
+
         virtual void ClosePort(void) override;
 
     internal:
@@ -90,7 +92,7 @@ namespace WinRT
     class WinRTMidi
     {
     public:
-        WinRTMidi(MidiPortChangedCallback callback);
+        WinRTMidi(void* ctx, MidiPortChangedCallback callback);
         WinRTMidiErrorType Initialize();
 
         WinRTMidiPortWatcher^ GetPortWatcher(WinRTMidiPortType type);
@@ -98,7 +100,6 @@ namespace WinRT
         Platform::String^ getPortId(WinRTMidiPortType type, unsigned int index);
 
     private:
-
         WinRTMidiPortWatcher^ mMidiInPortWatcher;
         WinRTMidiPortWatcher^ mMidiOutPortWatcher;
         std::shared_ptr<MidiPortWatcherWrapper> mMidiInPortWatcherWrapper;
@@ -108,10 +109,10 @@ namespace WinRT
     class MidiInPortWrapper
     {
     public:
-        MidiInPortWrapper(WinRTMidiInPort^ port, WinRTMidiInCallback callback)
+        MidiInPortWrapper(WinRTMidiInPort^ port, void* ctx, WinRTMidiInCallback callback)
             : mPort(port)
         {
-            mPort->SetMidiInCallback(callback);
+            mPort->SetMidiInCallback(ctx, callback);
         }
 
         WinRTMidiInPort^ getPort() { return mPort; };

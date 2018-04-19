@@ -13,7 +13,7 @@
 #include "WinRTMidi.h"
 #include "WinRTMidiimpl.h"
 #include <ppltasks.h>
-#include <robuffer.h> 
+#include <robuffer.h>
 
 using namespace WinRT;
 using namespace Windows::Devices::Midi;
@@ -27,10 +27,10 @@ using namespace Microsoft::WRL;
     WinRTMidiInPort
 *****************************************************/
 
-WinRTMidi::WinRTMidi(MidiPortChangedCallback callback)
+WinRTMidi::WinRTMidi(void* ctx, MidiPortChangedCallback callback)
 {
-    mMidiInPortWatcher = ref new WinRTMidiPortWatcher(WinRTMidiPortType::In, callback);
-    mMidiOutPortWatcher = ref new WinRTMidiPortWatcher(WinRTMidiPortType::Out, callback);
+    mMidiInPortWatcher = ref new WinRTMidiPortWatcher(WinRTMidiPortType::In, ctx, callback);
+    mMidiOutPortWatcher = ref new WinRTMidiPortWatcher(WinRTMidiPortType::Out, ctx, callback);
     mMidiInPortWatcherWrapper = std::make_shared<MidiPortWatcherWrapper>(mMidiInPortWatcher);
     mMidiOutPortWatcherWrapper = std::make_shared<MidiPortWatcherWrapper>(mMidiOutPortWatcher);
 }
@@ -138,15 +138,15 @@ WinRTMidiErrorType WinRTMidiInPort::OpenPort(Platform::String^ id)
     {
         // block until port is created
         mMidiInPort = task.get();
-		if (mMidiInPort != nullptr)
-		{
-			mMidiInPort->MessageReceived += ref new Windows::Foundation::TypedEventHandler<MidiInPort ^, MidiMessageReceivedEventArgs ^>(this, &WinRTMidiInPort::OnMidiInMessageReceived);
-		}
-		else
-		{
-			// no exception but we didn't get a valid port
-			result = WINRT_OPEN_PORT_ERROR;
-		}
+    if (mMidiInPort != nullptr)
+    {
+      mMidiInPort->MessageReceived += ref new Windows::Foundation::TypedEventHandler<MidiInPort ^, MidiMessageReceivedEventArgs ^>(this, &WinRTMidiInPort::OnMidiInMessageReceived);
+    }
+    else
+    {
+      // no exception but we didn't get a valid port
+      result = WINRT_OPEN_PORT_ERROR;
+    }
     }
     catch (Platform::Exception^ ex)
     {
@@ -156,7 +156,7 @@ WinRTMidiErrorType WinRTMidiInPort::OpenPort(Platform::String^ id)
     return result;
 }
 
-void WinRTMidiInPort::ClosePort(void) 
+void WinRTMidiInPort::ClosePort(void)
 {
     mMidiInPort = nullptr;
 }
@@ -176,15 +176,15 @@ void WinRTMidiInPort::OnMidiInMessageReceived(MidiInPort^ sender, MidiMessageRec
 
         auto buffer = args->Message->RawData;
 
-        // Obtain IBufferByteAccess 
+        // Obtain IBufferByteAccess
         ComPtr<IBufferByteAccess> pBufferByteAccess;
         ComPtr<IUnknown> pBuffer((IUnknown*)buffer);
         pBuffer.As(&pBufferByteAccess);
 
-        // Get pointer to iBuffer bytes 
+        // Get pointer to iBuffer bytes
         byte* pData;
         pBufferByteAccess->Buffer(&pData);
-        mMessageReceivedCallback((WinRTMidiInPortPtr) this, timestamp, pData, buffer->Length);
+        mMessageReceivedCallback(mCtx, (WinRTMidiInPortPtr) this, timestamp, pData, buffer->Length);
     }
 }
 
@@ -214,11 +214,11 @@ WinRTMidiErrorType WinRTMidiOutPort::OpenPort(Platform::String^ id)
     {
         // blocks until port is created
         mMidiOutPort = task.get();
-		if (mMidiOutPort == nullptr)
-		{
-			// no exception but we didn't get a valid port
-			result = WINRT_OPEN_PORT_ERROR;
-		}
+    if (mMidiOutPort == nullptr)
+    {
+      // no exception but we didn't get a valid port
+      result = WINRT_OPEN_PORT_ERROR;
+    }
     }
     catch (Platform::Exception^ ex)
     {
@@ -235,12 +235,12 @@ void WinRTMidiOutPort::ClosePort(void)
 
 byte* WinRTMidiOutPort::getIBufferDataPtr(IBuffer^ buffer)
 {
-    // Obtain IBufferByteAccess 
+    // Obtain IBufferByteAccess
     ComPtr<IBufferByteAccess> pBufferByteAccess;
     ComPtr<IUnknown> pBuffer((IUnknown*)buffer);
     pBuffer.As(&pBufferByteAccess);
 
-    // Get pointer to iBuffer bytes 
+    // Get pointer to iBuffer bytes
     byte* pData;
     pBufferByteAccess->Buffer(&pData);
     return pData;

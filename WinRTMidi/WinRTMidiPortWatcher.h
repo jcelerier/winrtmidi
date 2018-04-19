@@ -58,20 +58,22 @@ namespace WinRT
         Platform::String^ GetPortId(unsigned int portNumber);
 
         void RemoveMidiPortChangedCallback() {
+            mCtx = nullptr;
             mPortChangedCallback = nullptr;
         };
 
         WinRTMidiPortType GetPortType() { return mPortType; };
         event MidiPortUpdateHandler^ mMidiPortUpdateEventHander;
         void OnMidiPortUpdated(WinRTMidiPortUpdateType update);
-        
+
         // needs to be internal as MidiPortChangedCallbackType is not a WinRT type
-        void SetMidiPortChangedCallback(const MidiPortChangedCallback callback) {
+        void SetMidiPortChangedCallback(void* ctx, const MidiPortChangedCallback callback) {
+            mCtx = ctx;
             mPortChangedCallback = callback;
         };
-       
+
         // Constructor needs to be internal as this is an unsealed ref base class
-        WinRTMidiPortWatcher(WinRTMidiPortType type, MidiPortChangedCallback callback = nullptr);
+        WinRTMidiPortWatcher(WinRTMidiPortType type, void* ctx = nullptr, MidiPortChangedCallback callback = nullptr);
 
         // needs to be internal as std::string is not a WinRT type
         const std::string& WinRTMidiPortWatcher::GetPortName(unsigned int portNumber);
@@ -89,9 +91,10 @@ namespace WinRT
         std::mutex mEnumerationMutex;
         std::condition_variable mSleepCondition;
 
-        MidiPortChangedCallback mPortChangedCallback;
-        WinRTMidiPortType mPortType;
-        bool mPortEnumerationComplete;
+        void* mCtx{};
+        MidiPortChangedCallback mPortChangedCallback{};
+        WinRTMidiPortType mPortType{};
+        bool mPortEnumerationComplete{};
     };
 
 

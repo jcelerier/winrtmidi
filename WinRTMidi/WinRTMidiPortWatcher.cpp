@@ -41,12 +41,13 @@ namespace WinRT
         return stringUtf8;
     }
 
-    WinRTMidiPortWatcher::WinRTMidiPortWatcher(WinRTMidiPortType type, MidiPortChangedCallback callback)
+    WinRTMidiPortWatcher::WinRTMidiPortWatcher(WinRTMidiPortType type, void* ctx, MidiPortChangedCallback callback)
         : mPortEnumerationComplete(false)
+        , mCtx(ctx)
         , mPortChangedCallback(callback)
         , mPortType(type)
     {
- 
+
     }
 
     WinRTMidiErrorType WinRTMidiPortWatcher::Initialize()
@@ -170,7 +171,7 @@ namespace WinRT
 
         if (mPortChangedCallback != nullptr)
         {
-            mPortChangedCallback(&wrapper, update);
+            mPortChangedCallback(mCtx, &wrapper, update);
         }
 
         mMidiPortUpdateEventHander(this, update);
